@@ -24,13 +24,18 @@ class LIFOCache(BaseCaching):
         """
         assigns the item value to the key in self.cache_data
         """
-        if key is not None and item is not None:
+        if key and item:
+            if key in self.cache_data:
+                self.cache_data[key] = item
+                self.order.remove(key)
+            else:
+                if len(self.cache_data) >= self.MAX_ITEMS:
+                    discard = self.order[-1]
+                    del self.cache_data[discard]
+                    print("DISCARD: {}".format(discard))
+                    self.order.pop(-1)
             self.cache_data[key] = item
-            self.stack.append(key)
-            if len(self.cache_data) > self.MAX_ITEMS:
-                discarded_key = self.stack.pop(0)
-                del self.cache_data[discarded_key]
-                print("DISCARD: {}".format(discarded_key))
+        self.order.append(key)
 
     def get(self, key):
         """
