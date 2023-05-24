@@ -11,7 +11,8 @@ BaseCaching = __import__('base_caching').BaseCaching
 
 class BasicCache(BaseCaching):
     """
-    BasicCache class
+    BasicCache class perform some put and get operations,
+    and print the current state of the cache after each operation.
     """
     def put(self, key, item):
         if key is not None and item is not None:
