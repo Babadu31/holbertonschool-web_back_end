@@ -6,6 +6,7 @@ import time
 import asyncio
 from typing import List
 
+
 def measure_time(n: int, max_delay: int) -> float:
     """
     Returns the time taken for wait_n function
