@@ -18,7 +18,7 @@ class LIFOCache(BaseCaching):
         which will be used to keep track of the insertion order of keys.
         """
         super().__init__()
-        self.stack = []
+        self.order = []
 
     def put(self, key, item):
         """
