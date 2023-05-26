@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-""" simple pagination with python """
+"""
+Deletion-resilient hypermedia pagination
+"""
+
 import csv
 import math
-from typing import List
-index_range = __import__("0-simple_helper_function").index_range
+from typing import List, Dict
 
 
 class Server:
-    """ Server class to paginate a database of popular baby names """
+    """Server class to paginate a database of popular baby names.
+    """
     DATA_FILE = "Popular_Baby_Names.csv"
 
     def __init__(self):
         self.__dataset = None
+        self.__indexed_dataset = None
 
     def dataset(self) -> List[List]:
-        """ Cached dataset """
+        """Cached dataset
+        """
         if self.__dataset is None:
             with open(self.DATA_FILE) as f:
                 reader = csv.reader(f)
@@ -23,32 +28,37 @@ class Server:
 
         return self.__dataset
 
-    def get_page(self, page: int = 1, page_size: int = 10) -> List[List]:
-        """ takes two ints and returns a list of lists """
-        assert isinstance(page, int) and page > 0
+    def indexed_dataset(self) -> Dict[int, List]:
+        """Dataset indexed by sorting position, starting at 0
+        """
+        if self.__indexed_dataset is None:
+            dataset = self.dataset()
+            truncated_dataset = dataset[:1000]
+            self.__indexed_dataset = {
+                i: dataset[i] for i in range(len(dataset))
+            }
+        return self.__indexed_dataset
+
+    def get_hyper_index(self, index: int = None, page_size: int = 10) -> Dict:
+        """ if between two queries, the user does not miss items in dataset """
+        assert isinstance(index, int) and index >= 0
         assert isinstance(page_size, int) and page_size > 0
+        assert index < len(self.indexed_dataset())
 
-        (start, end) = index_range(page, page_size)
-        readingList = []
+        data = []
+        next_index = index
 
-        if end < len(self.dataset()):
-            for newPage in range(start, end):
-                readingList.append(self.dataset()[newPage])
-
-        return readingList
-
-    def get_hyper(self, page: int = 1, page_size: int = 10):
-        """
-            returns a dict with page_size, page, data,
-            next_page, prev_page, and total_pages
-        """
-        total_pages = math.ceil(len(self.dataset()) / page_size)
+        for _ in range(page_size):
+            # update next_index until it is ahead of the dataset
+            while not self.indexed_dataset().get(next_index):
+                next_index += 1
+            # add data to list and increment next_index
+            data.append(self.indexed_dataset()[next_index])
+            next_index += 1
 
         return {
+            "index": index,
+            "data": data,
             "page_size": page_size,
-            "page": page,
-            "data": self.get_page(page, page_size),
-            "next_page": page + 1 if page < total_pages else None,
-            "prev_page": page - 1 if page > 1 else None,
-            "total_pages": total_pages,
+            "next_index": next_index,
         }
