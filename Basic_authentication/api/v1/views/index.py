@@ -31,4 +31,5 @@ def stats() -> str:
 
 @index_blueprint.route('/unauthorized', methods=['GET'])
 def unauthorized():
+    """ GET /api/v1/unauthorized"""
     abort(401)
