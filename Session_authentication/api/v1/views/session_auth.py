@@ -42,11 +42,13 @@ def login():
 
     return response
 
-@app_views.route('/auth_session/logout', methods=['DELETE'],
-                 strict_slashes=False)
+@app_views.route('/auth_session/logout', methods=['DELETE'], strict_slashes=False)
 def logout():
-    """Route that deletes the session"""
-    from api.v1.app import auth
+    session_id = request.cookies.get('SESSION_NAME')
+    if not session_id:
+        return jsonify({"error": "session ID not found"}), 401
+
     if not auth.destroy_session(request):
-        abort(404, jsonify({"error": "session could not be deleted"}))
+        return jsonify({"error": "session could not be deleted"}), 500
+
     return jsonify({}), 200
