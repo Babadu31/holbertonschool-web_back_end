@@ -1,43 +1,60 @@
 #!/usr/bin/env python3
-"""Module containing basic API authentication
-"""
-from flask import request
-from typing import List, TypeVar
-import os
+"""Module that contains SessionAuth class definition."""
+from api.v1.auth.auth import Auth
+import uuid
+from models.user import User
 
 
-class Auth:
-    """Class used for basic authentication
-    """
-    def __init__(self):
-        pass
+class SessionAuth(Auth):
+    """Allows 'in-memory' Session ID storing"""
+    user_id_by_session_id = {}
 
-    def require_auth(self, path: str, excluded_paths: List[str]) -> bool:
-        """Returns False
+    def create_session(self, user_id: str = None) -> str:
+        """Creates a Session ID for a `user_id`"""
+        # if user_id is None or type(user_id) != str:
+        if user_id is None or not isinstance(user_id, str):
+            return None
+        session_id = str(uuid.uuid4())
+        self.user_id_by_session_id[session_id] = user_id
+        return session_id
+
+    def user_id_for_session_id(self, session_id: str = None) -> str:
+        """Method for retrieving a User ID"""
+        if session_id is None or not isinstance(session_id, str):
+            return None
+        return self.user_id_by_session_id.get(session_id)
+
+    def current_user(self, request=None):
         """
-        if path is None:
-            return True
-        if excluded_paths is None or excluded_paths == []:
-            return True
-
-        if path in excluded_paths or path + '/' in excluded_paths:
-            return False
-        return True
-
-    def authorization_header(self, request=None) -> str:
-        """validates all requests to secure the API.
+        Overloads current_user; returns a User based on a
+        cookie value.
         """
-        if request is None or 'Authorization' not in request.headers:
-            return
-        return request.headers['Authorization']
-
-    def current_user(self, request=None) -> TypeVar('User'):
-        """Returns a User object
-        """
-        return None
-
-    def session_cookie(self, request=None):
-        """Retrieves the value of the session cookie from the request."""
         if request is None:
             return None
-        return request.cookies.get(os.getenv("SESSION_NAME"))
+
+        session_id = self.session_cookie(request)
+        if session_id is None:
+            return None
+
+        user_id = self.user_id_for_session_id(session_id)
+        if user_id is None:
+            return None
+
+        user = User.get(user_id)
+        return user
+
+    def destroy_session(self, request=None):
+        """Deletes the user session / logout"""
+        # Check whether request exists
+        if not request:
+            return False
+        # Check whether the request contains Session ID cookie
+        session_id = self.session_cookie(request)
+        if not session_id:
+            return False
+        # Check whether Session ID is linked to a User ID
+        user_id = self.user_id_for_session_id(session_id)
+        if not user_id:
+            return False
+        self.user_id_by_session_id.pop(session_id)
+        return True
