@@ -12,6 +12,7 @@ from api.v1.app import auth
 
 @app_views.route('/auth_session/login', methods=['POST'], strict_slashes=False)
 def login():
+    "bla bla bla bla bla bla"
     email = request.form.get('email')
     password = request.form.get('password')
 
