@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+"""
+This module provides a RedactingFormatter class
+for use with Python's built-in logging module.
+This class is used to redact sensitive information,
+specified by field names, in the logging messages.
+
+This module also includes a utility function `filter_datum`
+for replacing sensitive information in text strings.
+"""
+
+
 import re
 import logging
 from typing import List
