@@ -17,59 +17,66 @@ champs considérés comme des Informations Personnellement Identifiables (PII).
 """
 
 
+import os
 import re
 import logging
+import mysql.connector
 from typing import List
 
-# Champs à considérer comme PII
+# Define fields considered as PII (Personally Identifiable Information)
 PII_FIELDS = ('name', 'email', 'phone', 'ssn', 'password')
 
 
 class RedactingFormatter(logging.Formatter):
     """
-    Classe RedactingFormatter
-    Elle étend la classe Formatter du module logging
-    pour ajouter la fonctionnalité de masquage des PII.
+    Redacting Formatter class for logging which redacts sensitive information
     """
 
     REDACTION = "***"
-    FORMAT = ("[HOLBERTON] %(name)s %(levelname)s %(asctime)-15s: "
-              "%(message)s")
+    FORMAT = "[HOLBERTON] %(name)s %(levelname)s %(asctime)-15s: %(message)s"
     SEPARATOR = ";"
 
     def __init__(self, fields: List[str]):
-        super(RedactingFormatter, self).__init__(self.FORMAT)
+        super().__init__(self.FORMAT)
         self.fields = fields
 
     def format(self, record: logging.LogRecord) -> str:
-        """Filtre les valeurs dans les enregistrements
-        de log entrants en utilisant filter_datum"""
-        original_format = super().format(record)
-        return self.filter_datum(
-            self.fields, self.REDACTION, original_format, self.SEPARATOR)
-
-    @staticmethod
-    def filter_datum(fields: List[str], redaction: str, message: str,
-                     separator: str) -> str:
         """
-        Filtre des champs spécifiques dans le datum
+        Overrides logging.Formatter format method to include PII filtering
         """
-        for field in fields:
-            message = re.sub(f"{field}=[^;]+", f"{field}={redaction}", message)
-        return message
+        return filter_datum(self.fields, self.REDACTION,
+                            super().format(record), self.SEPARATOR)
 
 
 def get_logger() -> logging.Logger:
     """
-    Renvoie un objet logging.Logger
-    Le logger a pour nom "user_data", son niveau est réglé sur INFO,
-    il n'envoie pas de messages à d'autres loggers et
-    utilise un StreamHandler avec RedactingFormatter comme formateur.
+    Returns a logger object
     """
+
     logger = logging.getLogger("user_data")
     logger.setLevel(logging.INFO)
     logger.propagate = False
+
     handler = logging.StreamHandler()
     handler.setFormatter(RedactingFormatter(list(PII_FIELDS)))
+
     logger.addHandler(handler)
     return logger
+
+
+def get_db() -> mysql.connector.connection.MySQLConnection:
+    """
+    Returns a connector to the database
+    """
+
+    username = os.getenv('PERSONAL_DATA_DB_USERNAME', 'root')
+    password = os.getenv('PERSONAL_DATA_DB_PASSWORD', '')
+    host = os.getenv('PERSONAL_DATA_DB_HOST', 'localhost')
+    db_name = os.getenv('PERSONAL_DATA_DB_NAME')
+
+    return mysql.connector.connect(
+        user=username,
+        password=password,
+        host=host,
+        database=db_name
+    )
