@@ -2,6 +2,7 @@
 """Class to manage API authentication"""
 from flask import request
 from typing import List, TypeVar
+import os
 
 
 class Auth:
@@ -33,3 +34,21 @@ class Auth:
         """Returns a User object
         """
         return None
+
+    def session_cookie(self, request=None):
+        """
+        Retrieve the value of the session cookie from a request.
+        Args:
+            request: The request object containing cookies.
+        Returns:
+            str: The value of the session cookie, or None if
+            request is None or the cookie is not found.
+        """
+        if request is None:
+            return None
+
+        session_name = os.environ.get('SESSION_NAME')
+        if session_name is None:
+            return None
+
+        return request.cookies.get(session_name)
