@@ -10,14 +10,17 @@ from models.user import User
 from api.v1.app import auth
 
 
-@app_views.route('/auth_session/login', methods=['POST'], strict_slashes=False)
+@app_views.route('/auth_session/login', methods=['POST'],
+                 strict_slashes=False)
 def login():
-    "bla bla bla bla bla bla"
+    """Route for session authentication"""
     email = request.form.get('email')
-    password = request.form.get('password')
+    if not email:
+        return jsonify({"error": "email missing"}), 400
 
-    if not email or not password:
-        return jsonify({"error": "email/password missing"}), 401
+    password = request.form.get('password')
+    if not password:
+        return jsonify({"error": "password missing"}), 400
 
     users = User.search({"email": email})
     if not users:
@@ -27,6 +30,7 @@ def login():
     if not user.is_valid_password(password):
         return jsonify({"error": "wrong password"}), 401
 
+    # New
     user_dict = user.to_json()
 
     session_id = auth.create_session(user.id)
