@@ -1,0 +1,1 @@
+all resistance is futile
