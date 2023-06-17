@@ -1,12 +1,9 @@
-#!/usr/bin/env python3
-"""Route module for the API"""
 from flask import Flask, render_template, request, g
-from flask_babel import Babel
-from typing import Dict
-
+from flask_babel import Babel, gettext
 
 app = Flask(__name__)
-babel = Babel(app)
+
+
 users = {
     1: {"name": "Balou", "locale": "fr", "timezone": "Europe/Paris"},
     2: {"name": "Beyonce", "locale": "en", "timezone": "US/Central"},
@@ -15,55 +12,45 @@ users = {
 }
 
 
-class Config:
-    """Config class"""
-
-    LANGUAGES = ["en", "fr"]
-    BABEL_DEFAULT_LOCALE = "en"
-    BABEL_DEFAULT_TIMEZONE = "UTC"
+class Config(object):
+    """declaration of class Config"""
+    LANGUAGES = ['en', 'fr']
+    BABEL_DEFAULT_LOCALE = 'en'
+    BABEL_DEFAULT_TIMEZONE = 'UTC'
 
 
 app.config.from_object(Config)
+babel = Babel(app)
+
+
+@app.route('/', strict_slashes=False)
+def index():
+    """Function renders 5-index"""
+    return render_template('5-index.html')
 
 
 @babel.localeselector
 def get_locale():
-    """Get locale"""
-    locale = request.args.get('locale')
-    if locale and locale in app.config['LANGUAGES']:
-        return locale
-
-    if g.user and g.user['locale'] in app.config['LANGUAGES']:
-        return g.user['locale']
-    header_locale = request.accept_languages.best_match(
-        app.config['LANGUAGES'])
-    if header_locale:
-        return header_locale
-    return app.config['BABEL_DEFAULT_LOCALE']
+    """Function matches best supported language"""
+    if 'locale' in request.args:
+        requested_locale = request.args['locale']
+        if requested_locale in app.config['LANGUAGES']:
+            return requested_locale
 
 
 def get_user():
-    """Returns a user dictionary or None if the ID cannot be found"""
+    """Function gets user id and returns it"""
     user_id = request.args.get('login_as')
     if user_id:
-        user = users.get(int(user_id))
-        return user
+        return users.get(int(user_id))
     return None
 
 
 @app.before_request
 def before_request():
-    """Find a user if any, and set it as a global on flask.g.user"""
+    """sets user to global on flask.g.user"""
     g.user = get_user()
 
 
-@app.route('/')
-def home():
-    """Home route"""
-    return render_template('5-index.html')
-
-
 if __name__ == '__main__':
-    app.config['LANGUAGES'] = ['en', 'fr']
-    app.config['BABEL_DEFAULT_LOCALE'] = 'en'
     app.run()
