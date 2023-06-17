@@ -1,9 +1,21 @@
-from flask import Flask, render_template, request, g
+#!/usr/bin/env python3
+''' Flask app '''
+
+from flask import Flask, request, render_template, g
 from flask_babel import Babel, gettext
 
 app = Flask(__name__)
+babel = Babel(app)
 
 
+class Config:
+    ''' App config '''
+    LANGUAGES = ["en", "fr"]
+    BABEL_DEFAULT_LOCALE = "en"
+    BABEL_DEFAULT_TIMEZONE = "UTC"
+
+
+app.config.from_object(Config)
 users = {
     1: {"name": "Balou", "locale": "fr", "timezone": "Europe/Paris"},
     2: {"name": "Beyonce", "locale": "en", "timezone": "US/Central"},
@@ -12,44 +24,34 @@ users = {
 }
 
 
-class Config(object):
-    """declaration of class Config"""
-    LANGUAGES = ['en', 'fr']
-    BABEL_DEFAULT_LOCALE = 'en'
-    BABEL_DEFAULT_TIMEZONE = 'UTC'
-
-
-app.config.from_object(Config)
-babel = Babel(app)
-
-
-@app.route('/', strict_slashes=False)
-def index():
-    """Function renders 5-index"""
-    return render_template('5-index.html')
+@app.before_request
+def before_request():
+    ''' def before request '''
+    g.user = get_user()
 
 
 @babel.localeselector
 def get_locale():
-    """Function matches best supported language"""
-    if 'locale' in request.args:
-        requested_locale = request.args['locale']
-        if requested_locale in app.config['LANGUAGES']:
-            return requested_locale
+    ''' return best languages '''
+    locale = request.args.get('locale')
+    if locale:
+        return locale
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
+
+
+@app.route("/", methods=["GET"], strict_slashes=False)
+def hello_world():
+    ''' return the template '''
+    return render_template('5-index.html')
 
 
 def get_user():
-    """Function gets user id and returns it"""
-    user_id = request.args.get('login_as')
-    if user_id:
-        return users.get(int(user_id))
-    return None
-
-
-@app.before_request
-def before_request():
-    """sets user to global on flask.g.user"""
-    g.user = get_user()
+    ''' return the right dictionary '''
+    Id = request.args.get('login_as')
+    if Id and int(Id) in users:
+        return users[int(Id)]
+    else:
+        return None
 
 
 if __name__ == '__main__':
