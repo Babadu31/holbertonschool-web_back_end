@@ -17,22 +17,21 @@ class Config(object):
 app.config.from_object(Config)
 
 
-@app.route('/')
+@app.route('/', strict_slashes=False)
 def index():
-    """index for flask app"""
-    return render_template('4-index.html', gettext=gettext)
+    """Route for `/`"""
+    return render_template('4-index.html')
 
 
 @babel.localeselector
 def get_locale():
-    """gets the best match language"""
-    if 'locale' in request.args:
-        locale = request.args.get('locale')
-        if locale in app.config['LANGUAGES']:
-            return locale
-
+    """Retrieves locale from request"""
+    locale = request.args.get('locale')
+    if locale and locale in Config.LANGUAGES:
+        return locale
     return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
 if __name__ == '__main__':
     app.run()
+
