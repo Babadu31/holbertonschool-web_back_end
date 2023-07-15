@@ -1,0 +1,1 @@
+You know, I don't think there's a good or bad situation
