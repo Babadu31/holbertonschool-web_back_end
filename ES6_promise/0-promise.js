@@ -1,6 +1,4 @@
-function getResponseFromAPI()
-const myPromise = new Promise((resolve, reject) => {
-  setTimeout(() => {
-    resolve('foo');
-  }, 300);
-})
+export default function getResponseFromAPI() {
+    const prom = new Promise(() => true);
+    return prom;
+  }
