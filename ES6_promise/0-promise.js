@@ -1,4 +1,4 @@
 export default function getResponseFromAPI() {
-    const prom = new Promise(() => true);
-    return prom;
-  }
+  const prom = new Promise(() => true);
+  return prom;
+}
